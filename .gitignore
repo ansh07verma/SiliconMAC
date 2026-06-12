@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Simulation outputs
+*.vvp
+*.vcd
+*.vcdcd
+*.fst
+gtkwave/
+
+# Synthesis/Flow artifacts
+flow/runs/
+runs/
+*.log
+*.rpt
+
+# Generated reports
+reports/
+metrics.json
+exploration_results.json
+analysis_results.json
+
+# OpenLane issue reproducible
+issue_reproducible/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
