@@ -19,6 +19,7 @@ env/
 *.vcdcd
 *.fst
 gtkwave/
+*.bmp
 
 # Synthesis/Flow artifacts
 flow/runs/
@@ -46,3 +47,10 @@ desktop.ini
 *.swp
 *.swo
 *~
+
+# Temp render scripts
+*.rb
+render_magic.tcl
+render_openroad.tcl
+check_api.py
+render_odb.py
