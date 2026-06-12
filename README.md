@@ -132,7 +132,6 @@ python3 run_tests.py    # 34/34 passing
 - [Installation Guide](docs/install_guide.md) — WSL2 + Docker setup
 - [Developer Guide](docs/developer_guide.md) — architecture, conventions
 - [Final Report](docs/final_report.md) — full project report with results
-- [Interview Notes](docs/interview_notes.md) — pitch, Q&A prep
 
 ## License
 
