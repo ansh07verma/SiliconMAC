@@ -8,11 +8,39 @@ A complete chip design project — from SystemVerilog RTL to manufactured layout
 
 ## Results
 
-| Variant | Setup WNS | TNS | Power | Core Area | DRC | LVS |
-|---------|-----------|-----|-------|-----------|-----|-----|
-| NPU W8/A4/D4 (20 ns) | 0.00 ns | 0.00 ns | ~9.6 mW | 61,256 um² | Clean | Clean |
+### Physical Design Summary
 
-**WNS = 0.00 ns, TNS = 0.00 ns** — timing closed at 20 ns clock period (50 MHz).
+| Variant | Clock | WNS | TNS | Setup Slack | Hold Slack | Power (typ) | Core Area | Cells | GDS | DRC | LVS |
+|---------|-------|-----|-----|-------------|------------|-------------|-----------|-------|-----|-----|-----|
+| MAC Basic (W8/A4) | 15 ns | 0.00 ns | 0.00 ns | +1.28 ns | +0.12 ns | 0.45 mW | 14,424 um² | 690 | 2.6 MB | Clean | Clean |
+| MAC Pipelined (W8/A4) | 10 ns | -0.47 ns | -0.81 ns | -0.47 ns | +0.12 ns | 1.04 mW | 15,655 um² | 715 | 2.6 MB | Clean | Clean |
+| **SiliconNPU (W8/A4/D4)** | **20 ns** | **0.00 ns** | **0.00 ns** | **+0.89 ns** | **+0.12 ns** | **12.3 mW** | **61,256 um²** | **2,856** | **8.4 MB** | **Clean** | **Clean** |
+
+All three variants pass DRC (0 violations) and LVS (0 errors). The NPU and MAC Basic achieve timing closure (WNS >= 0).
+
+### Simulation Results
+
+| Design | Tests | Pass | Fail | Status |
+|--------|-------|------|------|--------|
+| SiliconNPU | 4 (identity, zeros, max, weighted sum) | 4 | 0 | ALL PASS |
+| MAC Basic | 5 (accumulation, zeros, max, single, zero flag) | 5 | 0 | ALL PASS |
+| MAC Pipelined | (testbench module mismatch — needs separate TB) | — | — | — |
+
+### NPU PPA Breakdown
+
+| Metric | Value |
+|--------|-------|
+| Clock period | 20 ns (50 MHz) |
+| Die area | 0.070 mm² |
+| Core utilization | 55.3% |
+| Total cells | 2,856 |
+| Wire length | 88,970 um |
+| Vias | 23,904 |
+| HPWL | 60.4 mm |
+| Power (slowest) | 4.76 uW internal + 5.0 uW switching + 0.02 uW leakage |
+| Power (typical) | 5.89 mW internal + 6.39 mW switching + 0.87 uW leakage |
+| Critical path | 6.15 ns |
+| Suggested clock | 20 ns |
 
 ## Project Structure
 
@@ -24,9 +52,12 @@ SiliconNPU/
 │   └── mac_core_pipelined.sv   Pipelined MAC variant
 ├── verification/               Testbenches
 │   ├── silicon_npu_tb.sv       NPU testbench (4 tests, all pass)
-│   └── mac_core_tb.sv          MAC testbench (6 tests, all pass)
+│   └── mac_core_tb.sv          MAC testbench (5 tests, all pass)
 ├── flow/                       Physical design flow
-│   └── Makefile                Yosys synthesis targets
+│   ├── Makefile                Yosys synthesis targets
+│   ├── config.tcl              Active OpenLane config
+│   ├── src/                    RTL copies for OpenLane
+│   └── openlane_config/        Variant configs
 ├── openmac/                    Python tooling
 │   ├── logger.py               Stage-aware logging
 │   ├── tclgen.py               Config/TCL generation
@@ -45,8 +76,8 @@ SiliconNPU/
 ## NPU Architecture
 
 - **MAC Array**: 4 parallel multiply-accumulate units (8-bit operands)
-- **Weight Memory**: 4×4 array, single write port, combinational read
-- **Activation Memory**: 4×4 array, single write port, combinational read
+- **Weight Memory**: 4×4 array, single write port per (row, col), combinational read
+- **Activation Memory**: 4×4 array, single write port per (row, col), combinational read
 - **Controller FSM**: IDLE → COMPUTE → DONE_S, 3 states
 - **Accumulator**: 26-bit to hold full-precision results
 
@@ -65,16 +96,20 @@ For each row r: `result += Σ(act[r][i] * weight[r][i])` for i in 0..3
 ### Simulation
 
 ```bash
+# NPU (4 tests)
 iverilog -g2012 -o npu_tb.vvp verification/silicon_npu_tb.sv rtl/silicon_npu.sv
 vvp npu_tb.vvp
+
+# MAC Basic (5 tests)
+iverilog -g2012 -o mac_tb.vvp verification/mac_core_tb.sv rtl/mac_core.sv
+vvp mac_tb.vvp
 ```
 
-### Synthesis
+### Full Backend (RTL → GDS)
 
 ```bash
-# In Docker container
+# In Docker container with PDK
 export PDK_ROOT=/opt/pdk
-cd /path/to/SiliconNPU
 flow.tcl -design flow -tag silicon_npu
 ```
 
