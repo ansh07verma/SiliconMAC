@@ -18,6 +18,23 @@ A complete chip design project — from SystemVerilog RTL to manufactured layout
 
 All three variants pass DRC (0 violations) and LVS (0 errors). The NPU and MAC Basic achieve timing closure (WNS >= 0).
 
+### Layout Screenshots
+
+**Full chip — all layers:**
+![Full Chip](screenshots/full_chip.png)
+
+**Metal routing (M1–M5):**
+![Metal Routing](screenshots/metal_routing.png)
+
+**Power grid (M4 + M5):**
+![Power Grid](screenshots/power_grid.png)
+
+**Cell placement — zoomed standard cells with poly gates:**
+![Cell Placement](screenshots/cell_placement.png)
+
+**Signal routing (M2–M3) with vias:**
+![Signal Routing](screenshots/signal_routing.png)
+
 ### Simulation Results
 
 | Design | Tests | Pass | Fail | Status |
