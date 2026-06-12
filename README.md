@@ -33,25 +33,25 @@ The project demonstrates the full physical design flow: RTL design, functional v
 ## Architecture
 
 ```
-                    ┌─────────────────────────────┐
-                    │      Controller FSM          │
-                    │   IDLE → COMPUTE → DONE_S    │
-                    └──────────┬──────────────────┘
+               ┌──────────────────────────────┐
+               │      Controller FSM          │
+               │   IDLE → COMPUTE → DONE_S    │
+               └───────────────┬──────────────┘
                                │
               ┌────────────────┼────────────────┐
               │                │                │
-     ┌────────▼──────┐ ┌──────▼───────┐ ┌──────▼───────┐
-     │  Weight Memory │ │    MAC Array │ │ Act. Memory  │
-     │    4×4 × 8-bit │ │  4 parallel  │ │   4×4 × 8-bit│
-     │   (row, col)   │ │  multipliers │ │  (row, col)  │
-     └────────┬──────┘ └──────┬───────┘ └──────┬───────┘
-              │                │                │
-              └────────────────┼────────────────┘
-                               │
-                    ┌──────────▼──────────┐
-                    │    26-bit Accumulator │
-                    │    result[25:0]       │
-                    └─────────────────────┘
+     ┌────────▼──────┐ ┌───────▼──────┐ ┌───────▼───────┐
+     │ Weight Memory │ │   MAC Array  │ │ Act. Memory   │
+     │   4×4 × 8-bit │ │  4 parallel  │ │   4×4 × 8-bit │
+     │  (row, col)   │ │  multipliers │ │  (row, col)   │
+     └────────┬──────┘ └──────┬───────┘ └──────┬────────┘
+              │               │                │
+              └───────────────┼────────────────┘
+                              │
+                   ┌──────────▼──────────┐
+                   │  26-bit Accumulator │
+                   │  result[25:0]       │
+                   └─────────────────────┘
 ```
 
 For each row `r`: `result += Σ(act[r][i] × weight[r][i])` for `i` in `0..3`
