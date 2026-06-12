@@ -1,39 +1,70 @@
+<div align="center">
+
 # SiliconNPU
 
-RTL-to-GDS physical design of a parameterized Neural Processing Unit using open-source ASIC tools.
+**RTL-to-GDS Physical Design of a Neural Processing Unit**
 
-## What is this?
+*Built entirely with open-source ASIC tools on SkyWater 130nm*
 
-A complete chip design project — from SystemVerilog RTL to manufactured layout (GDSII) — built entirely with free, open-source tools. The design is a configurable NPU with MAC array, weight memory, activation memory, and controller FSM, implemented on SkyWater's 130nm open PDK.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![SkyWater 130nm](https://img.shields.io/badge/PDK-SKY130A-green.svg)](https://skywater-pdk.github.io/)
+[![OpenLane](https://img.shields.io/badge/Tool-OpenLane-orange.svg)](https://github.com/The-OpenROAD-Project/OpenLane)
+[![SystemVerilog](https://img.shields.io/badge/Language-SystemVerilog-blue.svg)](https://www.accellera.org/standards/systemverilog)
+
+</div>
+
+---
+
+## Introduction
+
+SiliconNPU is a complete chip design project — from SystemVerilog RTL to manufactured layout (GDSII) — built entirely with free, open-source tools. The design is a configurable Neural Processing Unit featuring a MAC array, weight memory, activation memory, and controller FSM, implemented on SkyWater's 130nm open PDK.
+
+The project demonstrates the full physical design flow: RTL design, functional verification, synthesis, floorplanning, placement, clock tree synthesis, routing, and signoff — all using open-source tools.
+
+## Key Features
+
+- **Complete NPU Architecture**: 4×4 MAC array with weight/activation memory banks and a 3-state controller FSM (IDLE → COMPUTE → DONE)
+- **Three Design Variants**: Basic MAC, Pipelined MAC, and full SiliconNPU — each with full physical design results
+- **Timing Closure**: WNS = 0.00 ns, TNS = 0.00 ns achieved at 20 ns clock period (50 MHz)
+- **Clean Signoff**: All three variants pass DRC (0 violations) and LVS (0 errors)
+- **Automated Tooling**: Python CLI for synthesis, design space exploration, PPA analysis, and HTML dashboard generation
+- **Comprehensive Verification**: 14 simulation tests across all designs (4 NPU + 5 Basic + 5 Pipelined), all passing
+
+## Architecture
+
+```
+                    ┌─────────────────────────────┐
+                    │      Controller FSM          │
+                    │   IDLE → COMPUTE → DONE_S    │
+                    └──────────┬──────────────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              │                │                │
+     ┌────────▼──────┐ ┌──────▼───────┐ ┌──────▼───────┐
+     │  Weight Memory │ │    MAC Array │ │ Act. Memory  │
+     │    4×4 × 8-bit │ │  4 parallel  │ │   4×4 × 8-bit│
+     │   (row, col)   │ │  multipliers │ │  (row, col)  │
+     └────────┬──────┘ └──────┬───────┘ └──────┬───────┘
+              │                │                │
+              └────────────────┼────────────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │    26-bit Accumulator │
+                    │    result[25:0]       │
+                    └─────────────────────┘
+```
+
+For each row `r`: `result += Σ(act[r][i] × weight[r][i])` for `i` in `0..3`
 
 ## Results
 
 ### Physical Design Summary
 
-| Variant | Clock | WNS | TNS | Setup Slack | Hold Slack | Power (typ) | Core Area | Cells | GDS | DRC | LVS |
-|---------|-------|-----|-----|-------------|------------|-------------|-----------|-------|-----|-----|-----|
-| MAC Basic (W8/A4) | 15 ns | 0.00 ns | 0.00 ns | +1.28 ns | +0.12 ns | 0.45 mW | 14,424 um² | 690 | 2.6 MB | Clean | Clean |
-| MAC Pipelined (W8/A4) | 10 ns | -0.47 ns | -0.81 ns | -0.47 ns | +0.12 ns | 1.04 mW | 15,655 um² | 715 | 2.6 MB | Clean | Clean |
-| **SiliconNPU (W8/A4/D4)** | **20 ns** | **0.00 ns** | **0.00 ns** | **+0.89 ns** | **+0.12 ns** | **12.3 mW** | **61,256 um²** | **2,856** | **8.4 MB** | **Clean** | **Clean** |
-
-All three variants pass DRC (0 violations) and LVS (0 errors). The NPU and MAC Basic achieve timing closure (WNS >= 0).
-
-### Layout Screenshots
-
-**Full chip — all layers:**
-![Full Chip](screenshots/full_chip.png)
-
-**Metal routing (M1–M5):**
-![Metal Routing](screenshots/metal_routing.png)
-
-**Power grid (M4 + M5):**
-![Power Grid](screenshots/power_grid.png)
-
-**Cell placement — zoomed standard cells with poly gates:**
-![Cell Placement](screenshots/cell_placement.png)
-
-**Signal routing (M2–M3) with vias:**
-![Signal Routing](screenshots/signal_routing.png)
+| Variant | Clock | WNS | TNS | Setup Slack | Hold Slack | Power (typ) | Core Area | Cells | DRC | LVS |
+|---------|-------|-----|-----|-------------|------------|-------------|-----------|-------|-----|-----|
+| MAC Basic (W8/A4) | 15 ns | 0.00 ns | 0.00 ns | +1.28 ns | +0.12 ns | 0.45 mW | 14,424 um² | 690 | Clean | Clean |
+| MAC Pipelined (W8/A4) | 10 ns | -0.47 ns | -0.81 ns | -0.47 ns | +0.12 ns | 1.04 mW | 15,655 um² | 715 | Clean | Clean |
+| **SiliconNPU (W8/A4/D4)** | **20 ns** | **0.00 ns** | **0.00 ns** | **+0.89 ns** | **+0.12 ns** | **12.3 mW** | **61,256 um²** | **2,856** | **Clean** | **Clean** |
 
 ### Simulation Results
 
@@ -53,56 +84,28 @@ All three variants pass DRC (0 violations) and LVS (0 errors). The NPU and MAC B
 | Total cells | 2,856 |
 | Wire length | 88,970 um |
 | Vias | 23,904 |
-| HPWL | 60.4 mm |
-| Power (slowest) | 4.76 uW internal + 5.0 uW switching + 0.02 uW leakage |
-| Power (typical) | 5.89 mW internal + 6.39 mW switching + 0.87 uW leakage |
 | Critical path | 6.15 ns |
-| Suggested clock | 20 ns |
 
-## Project Structure
+### Layout Screenshots
 
-```
-SiliconNPU/
-├── rtl/                        RTL sources
-│   ├── silicon_npu.sv          Neural Processing Unit (NPU)
-│   ├── mac_core.sv             Basic MAC accelerator
-│   └── mac_core_pipelined.sv   Pipelined MAC variant
-├── verification/               Testbenches
-│   ├── silicon_npu_tb.sv       NPU testbench (4 tests, all pass)
-│   └── mac_core_tb.sv          MAC testbench (5 tests, all pass)
-├── flow/                       Physical design flow
-│   ├── Makefile                Yosys synthesis targets
-│   ├── config.tcl              Active OpenLane config
-│   ├── src/                    RTL copies for OpenLane
-│   └── openlane_config/        Variant configs
-├── openmac/                    Python tooling
-│   ├── logger.py               Stage-aware logging
-│   ├── tclgen.py               Config/TCL generation
-│   └── analyze.py              Timing violation analyzer
-├── scripts/                    Utility scripts
-│   ├── explore.py              Design space explorer
-│   ├── parse_reports.py        Report parser (OpenLane output)
-│   └── dashboard.py            PPA dashboard generator
-├── tests/                      Unit tests (34/34 passing)
-├── docs/                       Documentation
-├── openmac.py                  CLI orchestrator
-├── run_tests.py                Test runner
-└── Makefile                    Top-level targets
-```
+**Full chip — all layers:**
+![Full Chip](screenshots/full_chip.png)
 
-## NPU Architecture
+**Metal routing (M1–M5):**
+![Metal Routing](screenshots/metal_routing.png)
 
-- **MAC Array**: 4 parallel multiply-accumulate units (8-bit operands)
-- **Weight Memory**: 4×4 array, single write port per (row, col), combinational read
-- **Activation Memory**: 4×4 array, single write port per (row, col), combinational read
-- **Controller FSM**: IDLE → COMPUTE → DONE_S, 3 states
-- **Accumulator**: 26-bit to hold full-precision results
+**Power grid (M4 + M5):**
+![Power Grid](screenshots/power_grid.png)
 
-### Computation
+**Cell placement — zoomed standard cells with poly gates:**
+![Cell Placement](screenshots/cell_placement.png)
 
-For each row r: `result += Σ(act[r][i] * weight[r][i])` for i in 0..3
+**Signal routing (M2–M3) with vias:**
+![Signal Routing](screenshots/signal_routing.png)
 
-## Quick Start
+---
+
+## Installation & Setup
 
 ### Prerequisites
 
@@ -120,6 +123,10 @@ vvp npu_tb.vvp
 # MAC Basic (5 tests)
 iverilog -g2012 -o mac_tb.vvp verification/mac_core_tb.sv rtl/mac_core.sv
 vvp mac_tb.vvp
+
+# MAC Pipelined (5 tests)
+iverilog -g2012 -o mac_pipe_tb.vvp verification/mac_core_pipelined_tb.sv rtl/mac_core_pipelined.sv
+vvp mac_pipe_tb.vvp
 ```
 
 ### Full Backend (RTL → GDS)
@@ -129,6 +136,40 @@ vvp mac_tb.vvp
 export PDK_ROOT=/opt/pdk
 flow.tcl -design flow -tag silicon_npu
 ```
+
+---
+
+## Repository Structure
+
+```
+SiliconNPU/
+├── rtl/                            RTL sources
+│   ├── silicon_npu.sv              Neural Processing Unit
+│   ├── mac_core.sv                 Basic MAC accelerator
+│   └── mac_core_pipelined.sv       Pipelined MAC variant
+├── verification/                   Testbenches
+│   ├── silicon_npu_tb.sv           NPU testbench (4/4 pass)
+│   ├── mac_core_tb.sv              MAC testbench (5/5 pass)
+│   └── mac_core_pipelined_tb.sv    Pipelined testbench (5/5 pass)
+├── flow/                           Physical design flow
+│   ├── Makefile                    Yosys synthesis targets
+│   ├── config.tcl                  Active OpenLane config
+│   ├── src/                        RTL copies for OpenLane
+│   └── openlane_config/            Variant configs (15ns, 20ns)
+├── results/                        GDS output files
+│   ├── silicon_npu/                NPU GDS (8.4 MB)
+│   ├── mac_basic/                  MAC Basic GDS (2.6 MB)
+│   └── mac_pipe/                   MAC Pipelined GDS (2.6 MB)
+├── screenshots/                    KLayout layout screenshots
+├── openmac/                        Python tooling
+├── scripts/                        Utility scripts
+├── docs/                           Documentation
+├── openmac.py                      CLI orchestrator
+├── run_tests.py                    Test runner
+└── Makefile                        Top-level targets
+```
+
+---
 
 ## Design Parameters
 
@@ -149,11 +190,7 @@ flow.tcl -design flow -tag silicon_npu
 | LVS | Netgen | Layout vs schematic |
 | PDK | SkyWater SKY130A | 130nm standard cell library |
 
-## Running Tests
-
-```bash
-python3 run_tests.py    # 34/34 passing
-```
+---
 
 ## Documentation
 
@@ -161,6 +198,10 @@ python3 run_tests.py    # 34/34 passing
 - [Installation Guide](docs/install_guide.md) — WSL2 + Docker setup
 - [Developer Guide](docs/developer_guide.md) — architecture, conventions
 - [Final Report](docs/final_report.md) — full project report with results
+
+## Author
+
+**Ansh Verma** — Vellore Institute of Technology
 
 ## License
 
