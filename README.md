@@ -201,7 +201,7 @@ SiliconNPU/
 
 ## Author
 
-**Ansh Verma** — Vellore Institute of Technology
+**Ansh Verma**
 
 ## License
 
