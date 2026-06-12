@@ -41,7 +41,7 @@ All three variants pass DRC (0 violations) and LVS (0 errors). The NPU and MAC B
 |--------|-------|------|------|--------|
 | SiliconNPU | 4 (identity, zeros, max, weighted sum) | 4 | 0 | ALL PASS |
 | MAC Basic | 5 (accumulation, zeros, max, single, zero flag) | 5 | 0 | ALL PASS |
-| MAC Pipelined | (testbench module mismatch — needs separate TB) | — | — | — |
+| MAC Pipelined | 5 (ones, zeros, max, weighted sum, mixed) | 5 | 0 | ALL PASS |
 
 ### NPU PPA Breakdown
 
